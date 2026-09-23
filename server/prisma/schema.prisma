@@ -1,0 +1,124 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum WorkflowStatus {
+  DRAFT
+  UNDER_REVIEW
+  ACTION_REQUIRED
+  APPROVED
+  REJECTED
+}
+
+enum DocumentType {
+  REGISTRATION_CERTIFICATE
+  GST_TAX_CERTIFICATE
+  BANK_DOCUMENT
+}
+
+enum DocChecklistStatus {
+  AVAILABLE
+  MISSING
+  VERIFIED
+}
+
+enum VerificationResult {
+  VERIFIED
+  MISMATCH
+  UNABLE_TO_VERIFY
+  PENDING
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskStatus {
+  PENDING
+  COMPLETED
+}
+
+model Vendor {
+  id                 String          @id @default(uuid())
+  companyName        String
+  contactPerson      String
+  email              String
+  phone              String
+  address            String
+  registrationNumber String
+  taxNumber          String         
+  bankAccountNumber  String
+  ifscCode           String
+  
+  status             WorkflowStatus  @default(DRAFT)
+  
+  externalVerificationStatus VerificationResult @default(PENDING)
+  externalData               Json?              
+  
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  documents          Document[]
+  tasks              Task[]
+  history            VendorHistory[]
+}
+
+model VendorHistory {
+  id         String   @id @default(uuid())
+  vendorId   String
+  vendor     Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  version    Int      
+  fieldChanged String
+  previousValue String? @db.Text
+  newValue     String? @db.Text
+  
+  createdAt  DateTime @default(now())
+
+  @@index([vendorId])
+}
+
+model Document {
+  id             String             @id @default(uuid())
+  vendorId       String
+  vendor         Vendor             @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  docType        DocumentType
+  fileUrl        String             
+  fileName       String
+  
+  extractedData  Json?             
+  mismatchFound  Boolean            @default(false)
+  mismatchDetails String?           @db.Text
+  
+  checklistStatus DocChecklistStatus @default(MISSING)
+  
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([vendorId])
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  vendorId    String
+  vendor      Vendor       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String?
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime
+  status      TaskStatus   @default(PENDING)
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([vendorId])
+}

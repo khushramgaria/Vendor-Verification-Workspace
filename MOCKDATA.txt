@@ -1,0 +1,8 @@
+Company Name: Murray Group 
+Contact Person: John Doe
+Email: your_email@example.com
+Phone: +1-800-555-0199
+Registration / Company Number: (798) 866-3276 x159   
+Tax Number: TAX-MURRAY-001
+Address: Albania Main Street, Tirana, Albania
+Status: UNDER_REVIEW
